@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ========================= CONFIG =========================
-MODEL = "devstral"                    # ← change to "qwen3-coder:30b" if you want the stronger coder model
+MODEL = "qwen3-coder:30b"
 
 UE_PROJECT_PATH = os.getenv("UE_PROJECT_PATH")
 OUTPUT_FOLDER   = os.getenv("OUTPUT_FOLDER")
