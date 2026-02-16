@@ -59,7 +59,7 @@ class AgentState(TypedDict):
     messages: Annotated[list[BaseMessage], add_messages]
 
 def agent_node(state: AgentState):
-    messages = [SystemMessage(content=SYSTEM_PROMPT)] + state.messages
+    messages = [SystemMessage(content=SYSTEM_PROMPT)] + state["messages"]
     response = llm.bind_tools(tools).invoke(messages)
     return {"messages": [response]}
 
