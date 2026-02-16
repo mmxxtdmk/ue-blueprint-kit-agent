@@ -69,9 +69,9 @@ python run_agent.py "Create a complete modular third-person animation + gameplay
 The script will appear in generated_kits/ (or directly in your UE project if you set UE_PROJECT_PATH).
 
 ### 7. Use in Unreal
-Copy the generated .py into your UE project (e.g. Content/Python)
-Open Unreal Editor → Window → Python Console
-Run: `exec(open(r"path\to\your_script.py").read())`
+- Copy the generated .py into your UE project (e.g. Content/Python)
+- Open Unreal Editor → Window → Python Console
+- Run: `exec(open(r"path\to\your_script.py").read())`
 
 ## Project Structure
 
@@ -105,7 +105,7 @@ ue-blueprint-kit-agent/
 - Support for Control Rig, Niagara, etc.
 
 ## License
-MIT License — see (LICENSE)
+- MIT License — see (LICENSE)
 
 ## Acknowledgments
 - Ollama team
