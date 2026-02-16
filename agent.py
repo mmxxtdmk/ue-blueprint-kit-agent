@@ -77,14 +77,33 @@ app = workflow.compile(checkpointer=MemorySaver())
 
 # ========================= RUN =========================
 def run_agent(prompt: str, kit_name: str = "MyKit"):
-    final_state = app.invoke(
+    print("🚀 Starting UE Kit Agent (streaming mode)...")
+    config = {"configurable": {"thread_id": kit_name}}
+    
+    # Force tool use in system prompt (critical for Qwen)
+    global SYSTEM_PROMPT
+    SYSTEM_PROMPT += "\n\nCRITICAL: Generate the FULL .py script in your mind, then IMMEDIATELY call the save_kit_script tool with the complete code. Do NOT output any partial code or explanations first — just the tool call."
+    
+    for event in app.stream(
         {"messages": [HumanMessage(content=prompt)]},
-        config={"configurable": {"thread_id": kit_name}}
-    )
-    last_msg = final_state["messages"][-1]
+        config=config,
+        stream_mode="values"  # Live state updates
+    ):
+        if "messages" in event and event["messages"]:
+            last = event["messages"][-1]
+            if hasattr(last, "tool_calls") and last.tool_calls:
+                print(f"🛠️  TOOL CALL: {last.tool_calls[0]['name']} (args: {last.tool_calls[0]['args']})")
+            elif hasattr(last, "content") and last.content.strip():
+                print(f"🤖 AGENT: {last.content[:300]}...")  # Truncated for speed
+            else:
+                print(f"📡 EVENT: {type(last).__name__}")
+    
+    # Final save/print
+    final_state = app.get_state(config)
+    last_msg = final_state.values["messages"][-1]
     if hasattr(last_msg, "content") and "Saved to:" in last_msg.content:
-        print(last_msg.content)
+        print("\n✅ " + last_msg.content)
     else:
-        print("Generated code:\n")
+        print("\nGenerated code:\n")
         print(last_msg.content)
         save_kit_script(last_msg.content, kit_name)
