@@ -9,21 +9,21 @@ Created by @mmxxtdmk — feel free to fork, customize, and push the state of the
 ## Features
 - Natural language → coherent Blueprint kits (Animation BP + Gameplay BP + Materials + Actors that work together)
 - Generates ready-to-run `.py` scripts using the official Unreal Python API
-- Runs locally on your RTX 5090 (GPU acceleration via Ollama)
+- Runs locally on your GPU (RTX 5090 tested. GPU acceleration via Ollama)
 - Hierarchical agent loop with memory and tool use
 - Outputs land directly in your UE project (configurable)
 - Fully open source — MIT licensed
 - Easy to extend (add RAG, self-validation, multi-agent refinement, etc.)
 
 ## Tech Stack
-- **LLM**: Ollama (devstral 24B recommended, qwen3-coder:30b also excellent)
+- **LLM**: Ollama (qwen3-coder:30b or better. devstral does not work for this purpose)
 - **Framework**: LangGraph + LangChain
 - **Unreal Integration**: Official Unreal Python API (UE 5.7.3)
 - **Python**: 3.10+
 
 ## Prerequisites
 - Windows 11 Pro (tested)
-- Ollama running (already installed on your machine)
+- Ollama running (Installed on your machine)
 - Unreal Engine 5.7.3 Editor
 - Python 3.10+ (comes with UE or use system Python)
 - Git
