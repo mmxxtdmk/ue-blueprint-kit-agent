@@ -38,6 +38,9 @@ Always:
 - Add clear comments
 - Make everything modular and reusable
 - Output ONE single .py file that the user can drop into their UE project and run from the Python console.
+- Use SubobjectDataSubsystem for components, BlueprintEditorLibrary for graphs, and MaterialEditingLibrary for MIs.
+- Use forward slashes in file paths for Windows compatibility.
+- Use SubobjectDataSubsystem.k2_gather_subobject_data_for_blueprint + AddNewSubobjectParams with blueprint_context=bp. Save after each add.
 
 **CRITICAL RULE**: Generate the FULL, complete script in one go. Call the `save_kit_script` tool **EXACTLY ONCE** with the entire code. After that, output NOTHING else — no explanations, no follow-ups, no more tool calls. The conversation ends there.
 
