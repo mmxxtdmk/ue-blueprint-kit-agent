@@ -1,0 +1,89 @@
+import os
+from datetime import datetime
+from langchain_ollama import ChatOllama
+from langchain_core.messages import HumanMessage, SystemMessage
+from langgraph.graph import StateGraph, END
+from langgraph.prebuilt import ToolNode
+from langgraph.checkpoint.memory import MemorySaver
+from pydantic import BaseModel
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# ========================= CONFIG =========================
+MODEL = "devstral"                    # ← change to "qwen3-coder:30b" if you want the stronger coder model
+
+UE_PROJECT_PATH = os.getenv("UE_PROJECT_PATH")
+OUTPUT_FOLDER   = os.getenv("OUTPUT_FOLDER")
+
+if not UE_PROJECT_PATH:
+    raise ValueError("UE_PROJECT_PATH is not set in .env — please create .env from .env.example and fill it in.")
+if not OUTPUT_FOLDER:
+    raise ValueError("OUTPUT_FOLDER is not set in .env — please create .env from .env.example and fill it in.")
+
+os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+
+llm = ChatOllama(model=MODEL, temperature=0.3, num_ctx=128000)
+
+# ========================= SYSTEM PROMPT (UE 5.7.3) =========================
+SYSTEM_PROMPT = """You are an expert Unreal Engine 5.7.3 Python scripter.
+Your job is to generate complete, ready-to-run .py scripts that create coherent "creative kits" of Blueprints.
+A kit = multiple related Blueprints (Animation BP + Gameplay BP + Material Instance + Actor BP) that work together out of the box.
+
+Use ONLY the official Unreal Python API (unreal.BlueprintFactory, SubobjectDataSubsystem, BlueprintEditorLibrary, etc.).
+Always:
+- Create assets under /Game/ paths
+- Compile every blueprint
+- Add clear comments
+- Make everything modular and reusable
+- Output ONE single .py file that the user can drop into their UE project and run from the Python console.
+
+Current date: February 2026. UE version: 5.7.3."""
+
+# ========================= TOOL =========================
+def save_kit_script(code: str, kit_name: str) -> str:
+    """Save the generated script to disk."""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"{kit_name.lower().replace(' ', '_')}_{timestamp}.py"
+    path = os.path.join(OUTPUT_FOLDER, filename)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(code)
+    return f"Saved to: {path}"
+
+tools = [save_kit_script]
+tool_node = ToolNode(tools)
+
+# ========================= GRAPH =========================
+class AgentState(BaseModel):
+    messages: list
+
+def agent_node(state: AgentState):
+    messages = [SystemMessage(content=SYSTEM_PROMPT)] + state.messages
+    response = llm.bind_tools(tools).invoke(messages)
+    return {"messages": state.messages + [response]}
+
+workflow = StateGraph(AgentState)
+workflow.add_node("agent", agent_node)
+workflow.add_node("tools", tool_node)
+workflow.set_entry_point("agent")
+workflow.add_conditional_edges(
+    "agent",
+    lambda x: "tools" if x["messages"][-1].tool_calls else END
+)
+workflow.add_edge("tools", "agent")
+
+app = workflow.compile(checkpointer=MemorySaver())
+
+# ========================= RUN =========================
+def run_agent(prompt: str, kit_name: str = "MyKit"):
+    final_state = app.invoke(
+        {"messages": [HumanMessage(content=prompt)]},
+        config={"configurable": {"thread_id": kit_name}}
+    )
+    last_msg = final_state["messages"][-1]
+    if hasattr(last_msg, "content") and "Saved to:" in last_msg.content:
+        print(last_msg.content)
+    else:
+        print("Generated code:\n")
+        print(last_msg.content)
+        save_kit_script(last_msg.content, kit_name)
