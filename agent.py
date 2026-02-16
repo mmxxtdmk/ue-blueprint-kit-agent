@@ -90,7 +90,9 @@ def run_agent(prompt: str, kit_name: str = "MyKit"):
         if "messages" in event and event["messages"]:
             last = event["messages"][-1]
             if hasattr(last, "tool_calls") and last.tool_calls:
-                print(f"🛠️  TOOL CALL: {last.tool_calls[0]['name']} (args: {last.tool_calls[0]['args'][:500]}...)")  # Truncated args for readability
+                tool_call = last.tool_calls[0]
+                args_str = str(tool_call.get('args', {}))[:500]  # Safe string conversion + truncate
+                print(f"🛠️  TOOL CALL: {tool_call['name']} (args: {args_str}...)")
             elif hasattr(last, "content") and last.content.strip():
                 print(f"🤖 AGENT: {last.content[:300]}...")  # Truncated for speed
             else:
