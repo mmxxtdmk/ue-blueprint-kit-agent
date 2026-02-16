@@ -39,6 +39,8 @@ Always:
 - Make everything modular and reusable
 - Output ONE single .py file that the user can drop into their UE project and run from the Python console.
 
+**CRITICAL RULE**: Generate the FULL, complete script in one go. Call the `save_kit_script` tool **EXACTLY ONCE** with the entire code. After that, output NOTHING else — no explanations, no follow-ups, no more tool calls. The conversation ends there.
+
 Current date: February 2026. UE version: 5.7.3."""
 
 # ========================= TOOL =========================
@@ -71,7 +73,7 @@ workflow.add_conditional_edges(
     "agent",
     lambda x: "tools" if x["messages"][-1].tool_calls else END 
 )
-workflow.add_edge("tools", "agent")
+workflow.add_edge("tools", END) # ← Stops after save
 
 app = workflow.compile(checkpointer=MemorySaver())
 
@@ -79,10 +81,6 @@ app = workflow.compile(checkpointer=MemorySaver())
 def run_agent(prompt: str, kit_name: str = "MyKit"):
     print("🚀 Starting UE Kit Agent (streaming mode)...")
     config = {"configurable": {"thread_id": kit_name}}
-    
-    # Force tool use in system prompt (critical for Qwen)
-    global SYSTEM_PROMPT
-    SYSTEM_PROMPT += "\n\nCRITICAL: Generate the FULL .py script in your mind, then IMMEDIATELY call the save_kit_script tool with the complete code. Do NOT output any partial code or explanations first — just the tool call."
     
     for event in app.stream(
         {"messages": [HumanMessage(content=prompt)]},
@@ -92,7 +90,7 @@ def run_agent(prompt: str, kit_name: str = "MyKit"):
         if "messages" in event and event["messages"]:
             last = event["messages"][-1]
             if hasattr(last, "tool_calls") and last.tool_calls:
-                print(f"🛠️  TOOL CALL: {last.tool_calls[0]['name']} (args: {last.tool_calls[0]['args']})")
+                print(f"🛠️  TOOL CALL: {last.tool_calls[0]['name']} (args: {last.tool_calls[0]['args'][:500]}...)")  # Truncated args for readability
             elif hasattr(last, "content") and last.content.strip():
                 print(f"🤖 AGENT: {last.content[:300]}...")  # Truncated for speed
             else:
