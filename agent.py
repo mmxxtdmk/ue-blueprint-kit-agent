@@ -1,8 +1,10 @@
 import os
 from datetime import datetime
+from typing import Annotated
 from langchain_ollama import ChatOllama
 from langchain_core.messages import HumanMessage, SystemMessage, BaseMessage
 from langgraph.graph import StateGraph, END
+from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
 from langgraph.checkpoint.memory import MemorySaver
 from pydantic import BaseModel
@@ -54,8 +56,8 @@ tools = [save_kit_script]
 tool_node = ToolNode(tools)
 
 # ========================= GRAPH =========================
-class AgentState(BaseModel):
-    messages: list[BaseMessage] = []   # better typing + default
+class AgentState(TypedDict):
+    messages: Annotated[list[BaseMessage], add_messages]
 
 def agent_node(state: AgentState):
     messages = [SystemMessage(content=SYSTEM_PROMPT)] + state.messages
@@ -68,7 +70,7 @@ workflow.add_node("tools", tool_node)
 workflow.set_entry_point("agent")
 workflow.add_conditional_edges(
     "agent",
-    lambda x: "tools" if getattr(x.messages[-1], "tool_calls", None) else END
+    lambda x: "tools" if x["messages"][-1].tool_calls else END 
 )
 workflow.add_edge("tools", "agent")
 
@@ -80,7 +82,7 @@ def run_agent(prompt: str, kit_name: str = "MyKit"):
         {"messages": [HumanMessage(content=prompt)]},
         config={"configurable": {"thread_id": kit_name}}
     )
-    last_msg = final_state.messages[-1]
+    last_msg = final_state["messages"][-1]
     if hasattr(last_msg, "content") and "Saved to:" in last_msg.content:
         print(last_msg.content)
     else:
