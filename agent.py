@@ -1,13 +1,12 @@
 import os
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, TypedDict
 from langchain_ollama import ChatOllama
 from langchain_core.messages import HumanMessage, SystemMessage, BaseMessage
 from langgraph.graph import StateGraph, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
 from langgraph.checkpoint.memory import MemorySaver
-from pydantic import BaseModel
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -62,7 +61,7 @@ class AgentState(TypedDict):
 def agent_node(state: AgentState):
     messages = [SystemMessage(content=SYSTEM_PROMPT)] + state.messages
     response = llm.bind_tools(tools).invoke(messages)
-    return {"messages": state.messages + [response]}
+    return {"messages": [response]}
 
 workflow = StateGraph(AgentState)
 workflow.add_node("agent", agent_node)
