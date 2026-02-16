@@ -51,8 +51,7 @@ pip install -r requirements.txt
 
 ### 4. Pull the model (once)
 ```powershell
-ollama pull devstral          # fastest & very capable
-# ollama pull qwen3-coder:30b   # stronger coder (if you have VRAM to spare)
+ollama pull qwen3-coder:30b   # devstral will not generate code for this use case.
 ```
 
 ### 5. Configure .env (optional but recommended)
@@ -69,24 +68,32 @@ python run_agent.py "Create a complete modular third-person animation + gameplay
 
 The script will appear in generated_kits/ (or directly in your UE project if you set UE_PROJECT_PATH).
 
-### 7. Use in UnrealCopy the generated .py into your UE project (e.g. Content/Python)
+### 7. Use in Unreal
+Copy the generated .py into your UE project (e.g. Content/Python)
 Open Unreal Editor → Window → Python Console
-Run: exec(open(r"path\to\your_script.py").read())
+Run: `exec(open(r"path\to\your_script.py").read())`
 
 ## Project Structure
 
 ue-blueprint-kit-agent/
+
 ├── agent.py              # Core LangGraph agent
+
 ├── run_agent.py          # CLI entry point
+
 ├── requirements.txt
+
 ├── .env.example
+
 ├── .gitignore
+
 ├── LICENSE
+
 └── generated_kits/       # Output folder (gitignored)
 
 ## How to Contribute
 - Fork the repo
-- Create a feature branch (git checkout -b feature/amazing-thing)
+- Create a feature branch (`git checkout -b feature/amazing-thing`)
 - Commit and push
 - Open a PR
 
